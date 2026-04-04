@@ -24,6 +24,7 @@ def create_app() -> Flask:
     app.config.update(
         DB_PATH=os.getenv("DB_PATH", str(DEFAULT_DB_PATH)),
         JWT_SECRET=os.getenv("JWT_SECRET", "replace-me-in-production"),
+        KITCHEN_DISPLAY_KEY=os.getenv("KITCHEN_DISPLAY_KEY", "kitchen-display-dev-key"),
         APP_HOST=os.getenv("APP_HOST", "0.0.0.0"),
         APP_PORT=int(os.getenv("APP_PORT", "5000")),
         CORS_ORIGINS=os.getenv("CORS_ORIGINS", "*").split(","),
