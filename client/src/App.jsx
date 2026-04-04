@@ -207,6 +207,27 @@ function App() {
     }
   }, [customerOrderCart])
 
+  const kitchenBoardColumns = useMemo(
+    () => [
+      {
+        id: 'TO_COOK',
+        label: 'To Cook',
+        tickets: kitchenTickets.filter((ticket) => ticket.ticket_status === 'TO_COOK'),
+      },
+      {
+        id: 'PREPARING',
+        label: 'Preparing',
+        tickets: kitchenTickets.filter((ticket) => ticket.ticket_status === 'PREPARING'),
+      },
+      {
+        id: 'COMPLETED',
+        label: 'Completed',
+        tickets: kitchenTickets.filter((ticket) => ticket.ticket_status === 'COMPLETED'),
+      },
+    ],
+    [kitchenTickets],
+  )
+
   useEffect(() => {
     if (!token) {
       return
@@ -1238,36 +1259,48 @@ function App() {
 
   if (isCustomerUser) {
     return (
-      <main className="pos-page">
-        <header className="top-bar">
+      <main className="min-h-screen bg-slate-50 px-4 py-6 pb-28 md:px-6 md:py-8">
+        <header className="sticky top-4 z-20 mb-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-white/90 p-4 shadow-sm backdrop-blur">
           <div>
-            <p className="eyebrow">Customer Portal</p>
-            <h1>Self Order</h1>
-            <p className="session-label">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Customer Portal</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">Self Order</h1>
+            <p className="text-sm text-slate-500">
               {user.username} · {session ? `Session #${session.session_id} open` : 'Register closed'}
             </p>
           </div>
-          <div className="top-bar-actions">
-            <button type="button" className="button-secondary" onClick={handleReloadData}>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95"
+              onClick={handleReloadData}
+            >
               Reload Data
             </button>
-            <button type="button" className="button-secondary" onClick={handleLogout}>
+            <button
+              type="button"
+              className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95"
+              onClick={handleLogout}
+            >
               Logout
             </button>
           </div>
         </header>
 
-        {error && <p className="error-banner">{error}</p>}
-        {notice && <p className="notice-banner">{notice}</p>}
+        {error && <p className="mb-3 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">{error}</p>}
+        {notice && <p className="mb-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700 shadow-sm">{notice}</p>}
 
-        <section className="floor-panel">
-          <h2>Choose Table</h2>
-          <div className="chip-row">
+        <section className="mb-4 rounded-3xl bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-xl font-bold tracking-tight text-slate-900">Choose Table</h2>
+          <div className="flex flex-wrap gap-2">
             {allTables.map((table) => (
               <button
                 key={table.id}
                 type="button"
-                className={customerTableIdSelfOrder === table.id ? 'chip chip-active' : 'chip'}
+                className={
+                  customerTableIdSelfOrder === table.id
+                    ? 'rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95'
+                    : 'rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:bg-slate-200 hover:shadow-sm active:scale-95'
+                }
                 onClick={() => setCustomerTableIdSelfOrder(table.id)}
                 disabled={!table.is_active}
               >
@@ -1277,50 +1310,50 @@ function App() {
           </div>
         </section>
 
-        <section className="main-grid">
-          <div className="product-panel">
-            <h2>Menu</h2>
-            <div className="product-grid">
+        <section className="grid gap-4 xl:grid-cols-[1.55fr_minmax(300px,420px)]">
+          <div className="rounded-3xl bg-white p-5 shadow-sm">
+            <h2 className="mb-4 text-xl font-bold tracking-tight text-slate-900">Menu</h2>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {products.map((product) => (
                 <button
                   key={product.id}
                   type="button"
-                  className="product-card"
+                  className="rounded-2xl bg-slate-50 p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95"
                   onClick={() => addProductToCustomerCart(product)}
                 >
-                  <p className="product-name">{product.name}</p>
-                  <p className="product-meta">{product.category}</p>
-                  <p className="product-price">{formatMoney(product.price)}</p>
+                  <p className="text-base font-semibold text-slate-900">{product.name}</p>
+                  <p className="mt-1 text-sm text-slate-500">{product.category}</p>
+                  <p className="mt-3 text-base font-bold text-slate-900">{formatMoney(product.price)}</p>
                 </button>
               ))}
             </div>
           </div>
 
-          <aside className="order-tray">
-            <h2>Your Order</h2>
-            <p className="table-pill">
+          <aside className="rounded-3xl bg-white p-5 shadow-sm">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900">Your Order</h2>
+            <p className="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
               {customerSelectedTable
                 ? `Table ${customerSelectedTable.table_number}`
                 : 'No table selected'}
             </p>
 
-            <div className="order-lines">
-              {customerOrderCart.length === 0 && <p className="empty-note">No items selected.</p>}
+            <div className="mt-4 space-y-2">
+              {customerOrderCart.length === 0 && <p className="text-sm text-slate-500">No items selected.</p>}
               {customerOrderCart.map((line) => (
-                <article key={line.productId} className="order-line-card">
-                  <p>{line.name}</p>
-                  <div className="quantity-controls">
+                <article key={line.productId} className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2">
+                  <p className="text-sm font-medium text-slate-700">{line.name}</p>
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="button-ghost"
+                      className="h-8 w-8 rounded-full bg-white text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95"
                       onClick={() => updateCustomerCartQuantity(line.productId, line.quantity - 1)}
                     >
                       -
                     </button>
-                    <span>{line.quantity}</span>
+                    <span className="min-w-5 text-center text-sm font-semibold text-slate-700">{line.quantity}</span>
                     <button
                       type="button"
-                      className="button-ghost"
+                      className="h-8 w-8 rounded-full bg-white text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95"
                       onClick={() => updateCustomerCartQuantity(line.productId, line.quantity + 1)}
                     >
                       +
@@ -1330,14 +1363,14 @@ function App() {
               ))}
             </div>
 
-            <div className="totals-block">
-              <p>Subtotal: {formatMoney(customerCartSummary.subtotal)}</p>
-              <p>Tax: {formatMoney(customerCartSummary.tax)}</p>
-              <p className="total-row">Total: {formatMoney(customerCartSummary.total)}</p>
+            <div className="mt-4 space-y-1 rounded-2xl bg-slate-50 p-3">
+              <p className="text-sm text-slate-600">Subtotal: {formatMoney(customerCartSummary.subtotal)}</p>
+              <p className="text-sm text-slate-600">Tax: {formatMoney(customerCartSummary.tax)}</p>
+              <p className="text-lg font-bold tracking-tight text-slate-900">Total: {formatMoney(customerCartSummary.total)}</p>
             </div>
 
             <button
-              className="button-primary"
+              className="mt-4 w-full rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
               type="button"
               onClick={handlePlaceCustomerOrder}
               disabled={isBusy || customerOrderCart.length === 0 || !session || !customerSelectedTable}
@@ -1347,47 +1380,47 @@ function App() {
           </aside>
         </section>
 
-        <section className="customer-display-board">
-          <div className="customer-display-header">
-            <h2>Order Status</h2>
+        <section className="rounded-3xl bg-white p-5 shadow-sm">
+          <div className="mb-3">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900">Order Status</h2>
           </div>
 
           {!customerOrderStatus?.available && (
-            <p className="empty-note">Place an order to track its status.</p>
+            <p className="text-sm text-slate-500">Place an order to track its status.</p>
           )}
 
           {customerOrderStatus?.available && customerOrderStatus?.order && (
-            <article className="customer-display-card">
-              <p className="customer-order-title">
+            <article className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-base font-semibold text-slate-900">
                 {customerOrderStatus.order.order_number} · Table {customerOrderStatus.order.table_number || '-'}
               </p>
-              <div className="customer-status-row">
-                <span className="customer-status-pill">
+              <div className="mt-2 flex flex-wrap gap-2">
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
                   Order: {customerOrderStatus.order.order_status}
                 </span>
-                <span className="customer-status-pill">
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
                   Kitchen: {customerOrderStatus.order.kitchen_status}
                 </span>
-                <span className="customer-status-pill customer-status-pill-payment">
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
                   Payment: {customerOrderStatus.order.payment_status}
                 </span>
               </div>
 
               {customerOrderStatus.order.order_status === 'REJECTED' && (
-                <p className="error-banner">
+                <p className="mt-3 rounded-2xl bg-red-50 px-4 py-2 text-sm text-red-700 shadow-sm">
                   This order was rejected by manager. Please place a new order.
                 </p>
               )}
 
-              <div className="customer-item-list">
+              <div className="mt-3 space-y-1">
                 {customerOrderStatus.order.items.map((item, index) => (
-                  <p key={`${customerOrderStatus.order.order_id}-${item.product_name}-${index}`}>
+                  <p key={`${customerOrderStatus.order.order_id}-${item.product_name}-${index}`} className="text-sm text-slate-700">
                     {item.quantity} x {item.product_name}
                   </p>
                 ))}
               </div>
 
-              <p className="customer-total-row">
+              <p className="mt-3 text-lg font-bold tracking-tight text-slate-900">
                 Total: {formatMoney(customerOrderStatus.order.total_amount)}
               </p>
             </article>
@@ -1399,99 +1432,95 @@ function App() {
 
   if (isKitchenDisplayMode) {
     return (
-      <main className="pos-page">
-        <header className="top-bar">
+      <main className="min-h-screen bg-slate-50 px-4 py-6 md:px-6 md:py-8">
+        <header className="sticky top-4 z-20 mb-6 flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-white/90 p-4 shadow-sm backdrop-blur">
           <div>
-            <p className="eyebrow">Kitchen Display</p>
-            <h1>Odoo POS Cafe Kitchen</h1>
-            <p className="session-label">{user?.username || 'Public Kitchen Screen'}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Kitchen Display</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">Odoo POS Cafe Kitchen</h1>
+            <p className="text-sm text-slate-500">{user?.username || 'Public Kitchen Screen'}</p>
           </div>
-          <div className="top-bar-actions">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              className="button-secondary"
+              className="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95"
               onClick={isKitchenPublicMode ? refreshPublicKitchenTickets : refreshKitchenTickets}
             >
               Refresh
             </button>
             {!isKitchenPublicMode && (
-              <button type="button" className="button-secondary" onClick={handleLogout}>
+              <button
+                type="button"
+                className="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95"
+                onClick={handleLogout}
+              >
                 Logout
               </button>
             )}
           </div>
         </header>
 
-        {error && <p className="error-banner">{error}</p>}
-        {notice && <p className="notice-banner">{notice}</p>}
+        {error && <p className="mb-3 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">{error}</p>}
+        {notice && <p className="mb-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700 shadow-sm">{notice}</p>}
 
-        <section className="kitchen-board">
-          <div className="kitchen-board-header">
-            <h2>Kitchen Display</h2>
-            <div className="chip-row">
-              <button
-                type="button"
-                className={kitchenFilter === '' ? 'chip chip-active' : 'chip'}
-                onClick={() => setKitchenFilter('')}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                className={kitchenFilter === 'TO_COOK' ? 'chip chip-active' : 'chip'}
-                onClick={() => setKitchenFilter('TO_COOK')}
-              >
-                To Cook
-              </button>
-              <button
-                type="button"
-                className={kitchenFilter === 'PREPARING' ? 'chip chip-active' : 'chip'}
-                onClick={() => setKitchenFilter('PREPARING')}
-              >
-                Preparing
-              </button>
-              <button
-                type="button"
-                className={kitchenFilter === 'COMPLETED' ? 'chip chip-active' : 'chip'}
-                onClick={() => setKitchenFilter('COMPLETED')}
-              >
-                Completed
-              </button>
-            </div>
+        <section className="rounded-3xl bg-white p-4 shadow-sm md:p-6">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900">Kitchen Kanban</h2>
+            <p className="text-sm text-slate-500">Live order pipeline</p>
           </div>
 
-          <div className="kitchen-grid">
-            {kitchenTickets.length === 0 && (
-              <p className="empty-note">No tickets for this filter.</p>
-            )}
-            {kitchenTickets.map((ticket) => (
-              <article key={ticket.ticket_id} className="kitchen-ticket-card">
-                <p className="kitchen-ticket-title">
-                  {ticket.order_number} · Table {ticket.table_number || '-'}
-                </p>
-                <p className="kitchen-ticket-status">{ticket.ticket_status}</p>
-                <div className="kitchen-item-list">
-                  {ticket.items.map((item, index) => (
-                    <p key={`${ticket.ticket_id}-${item.product_name}-${index}`}>
-                      {item.quantity} x {item.product_name}
+          <div className="grid gap-4 lg:grid-cols-3">
+            {kitchenBoardColumns.map((column) => (
+              <section key={column.id} className="rounded-2xl bg-slate-100 p-3">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
+                    {column.label}
+                  </h3>
+                  <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-500 shadow-sm">
+                    {column.tickets.length}
+                  </span>
+                </div>
+
+                <div className="grid gap-3">
+                  {column.tickets.length === 0 && (
+                    <p className="rounded-xl bg-white px-3 py-4 text-sm text-slate-500 shadow-sm">
+                      No tickets.
                     </p>
+                  )}
+
+                  {column.tickets.map((ticket) => (
+                    <article key={ticket.ticket_id} className="rounded-2xl bg-white p-4 shadow-sm">
+                      <p className="text-base font-semibold text-slate-900">
+                        {ticket.order_number} · Table {ticket.table_number || '-'}
+                      </p>
+                      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                        {ticket.ticket_status}
+                      </p>
+                      <div className="mb-3 space-y-1">
+                        {ticket.items.map((item, index) => (
+                          <p key={`${ticket.ticket_id}-${item.product_name}-${index}`} className="text-sm text-slate-700">
+                            {item.quantity} x {item.product_name}
+                          </p>
+                        ))}
+                      </div>
+
+                      {ticket.ticket_status !== 'COMPLETED' && (
+                        <button
+                          type="button"
+                          className="w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                          onClick={() =>
+                            isKitchenPublicMode
+                              ? handleAdvanceTicketPublic(ticket)
+                              : handleAdvanceTicket(ticket)
+                          }
+                          disabled={isBusy}
+                        >
+                          Move to {ticket.ticket_status === 'TO_COOK' ? 'Preparing' : 'Completed'}
+                        </button>
+                      )}
+                    </article>
                   ))}
                 </div>
-                {ticket.ticket_status !== 'COMPLETED' && (
-                  <button
-                    type="button"
-                    className="button-primary"
-                    onClick={() =>
-                      isKitchenPublicMode
-                        ? handleAdvanceTicketPublic(ticket)
-                        : handleAdvanceTicket(ticket)
-                    }
-                    disabled={isBusy}
-                  >
-                    Move to {ticket.ticket_status === 'TO_COOK' ? 'Preparing' : 'Completed'}
-                  </button>
-                )}
-              </article>
+              </section>
             ))}
           </div>
         </section>
@@ -1499,84 +1528,85 @@ function App() {
     )
   }
 
+  const managerViews = [
+    { id: 'pos', label: 'Register', eyebrow: 'Live Counter' },
+    { id: 'customer', label: 'Customer Display', eyebrow: 'Front Screen' },
+    { id: 'backend', label: 'Back-end', eyebrow: 'Configuration' },
+    { id: 'reports', label: 'Reports', eyebrow: 'Insights' },
+  ]
+
+  const managerViewMeta =
+    managerViews.find((item) => item.id === view) || managerViews[0]
+
   return (
-    <main className="pos-page">
-      <header className="top-bar">
-        <div>
-          <p className="eyebrow">Session Operator</p>
-          <h1>Odoo POS Cafe</h1>
-          <p className="session-label">
-            {user.username} · {session ? `Session #${session.session_id} open` : 'Register closed'}
+    <main className="min-h-screen bg-slate-50 p-4 md:p-6">
+      <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <aside className="rounded-3xl bg-white p-5 shadow-sm lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)]">
+        <div className="mb-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Session Operator</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Odoo POS Cafe</h1>
+          <p className="text-sm text-slate-500">{user.username}</p>
+        </div>
+
+        <nav className="mb-5 grid gap-2" aria-label="Primary">
+          {managerViews.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={
+                view === item.id
+                  ? 'rounded-full bg-slate-900 px-4 py-2 text-left text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95'
+                  : 'rounded-full bg-slate-100 px-4 py-2 text-left text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:bg-slate-200 hover:shadow-sm active:scale-95'
+              }
+              onClick={() => setView(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="rounded-2xl bg-slate-100 p-4">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Register State</p>
+          <p className="inline-flex rounded-full bg-white px-3 py-1 text-sm text-slate-700 shadow-sm">
+            {session ? `Session #${session.session_id} open` : 'Register closed'}
           </p>
+          {view === 'pos' && pendingVerificationOrders.length > 0 && (
+            <p className="mt-2 text-sm text-slate-500">
+              {pendingVerificationOrders.length} order(s) waiting for verification
+            </p>
+          )}
         </div>
-        <div className="top-bar-actions">
-          <button
-            type="button"
-            className="button-secondary"
-            onClick={handleReloadData}
-            disabled={isBusy}
-          >
-            Reload Data
-          </button>
-          <button
-            type="button"
-            className={view === 'pos' ? 'chip chip-active' : 'chip'}
-            onClick={() => setView('pos')}
-          >
-            Register
-          </button>
-          <button
-            type="button"
-            className={view === 'customer' ? 'chip chip-active' : 'chip'}
-            onClick={() => setView('customer')}
-          >
-            Customer
-          </button>
-          <button
-            type="button"
-            className={view === 'backend' ? 'chip chip-active' : 'chip'}
-            onClick={() => setView('backend')}
-          >
-            Back-end
-          </button>
-          <button
-            type="button"
-            className={view === 'reports' ? 'chip chip-active' : 'chip'}
-            onClick={() => setView('reports')}
-          >
-            Reports
-          </button>
-          {!session && (
+      </aside>
+
+      <section>
+        <header className="mb-4 rounded-3xl bg-white p-4 shadow-sm md:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{managerViewMeta.eyebrow}</p>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">{managerViewMeta.label}</h2>
+            <p className="text-sm text-slate-500">
+              {session ? 'Operational mode is active.' : 'Open a session to start orders and billing.'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              className="button-primary"
-              onClick={handleOpenSession}
+              className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:bg-slate-200 hover:shadow-sm active:scale-95"
+              onClick={handleReloadData}
               disabled={isBusy}
             >
-              Open Session
+              Reload Data
             </button>
-          )}
-          {session && (
-            <button
-              type="button"
-              className="button-secondary"
-              onClick={handleCloseRegister}
-              disabled={isBusy}
-            >
-              Close Register
-            </button>
-          )}
-          <button type="button" className="button-secondary" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-      </header>
+          </div>
+          </div>
+        </header>
 
-      {error && <p className="error-banner">{error}</p>}
-      {notice && <p className="notice-banner">{notice}</p>}
+        {error && <p className="mb-3 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">{error}</p>}
+        {notice && <p className="mb-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700 shadow-sm">{notice}</p>}
 
+        <div className="space-y-4">
       {view === 'customer' && (
-        <section className="customer-display-board">
+        <section className="customer-display-board rounded-3xl bg-white p-5 shadow-sm">
           <div className="customer-display-header">
             <h2>Customer Display</h2>
             <div className="chip-row">
@@ -1642,7 +1672,7 @@ function App() {
       )}
 
       {view === 'reports' && (
-        <section className="reports-board">
+        <section className="reports-board rounded-3xl bg-white p-5 shadow-sm">
           <div className="reports-header">
             <h2>Sales Dashboard</h2>
             <div className="reports-filter-grid">
@@ -1790,22 +1820,22 @@ function App() {
           </div>
 
           <div className="reports-kpi-grid">
-            <article className="reports-kpi-card">
+            <article className="reports-kpi-card rounded-2xl bg-slate-50 p-4 shadow-sm">
               <p>Total Sales</p>
               <h3>{formatMoney(salesReport?.summary?.total_sales || 0)}</h3>
             </article>
-            <article className="reports-kpi-card">
+            <article className="reports-kpi-card rounded-2xl bg-slate-50 p-4 shadow-sm">
               <p>Orders</p>
               <h3>{salesReport?.summary?.order_count || 0}</h3>
             </article>
-            <article className="reports-kpi-card">
+            <article className="reports-kpi-card rounded-2xl bg-slate-50 p-4 shadow-sm">
               <p>Average Order</p>
               <h3>{formatMoney(salesReport?.summary?.avg_order_value || 0)}</h3>
             </article>
           </div>
 
           <div className="reports-split-grid">
-            <article className="reports-card">
+            <article className="reports-card rounded-2xl bg-slate-50 p-4 shadow-sm">
               <h3>Top Products</h3>
               {!salesReport?.by_product?.length && (
                 <p className="empty-note">No product sales for selected filters.</p>
@@ -1817,7 +1847,7 @@ function App() {
               ))}
             </article>
 
-            <article className="reports-card">
+            <article className="reports-card rounded-2xl bg-slate-50 p-4 shadow-sm">
               <h3>Payment Mix</h3>
               {!salesReport?.by_payment_method?.length && (
                 <p className="empty-note">No payment data for selected filters.</p>
@@ -1833,13 +1863,13 @@ function App() {
       )}
 
       {view === 'backend' && (
-        <section className="reports-board">
+        <section className="reports-board rounded-3xl bg-white p-5 shadow-sm">
           <div className="reports-header">
             <h2>Back-end Configuration</h2>
           </div>
 
           <div className="reports-split-grid">
-            <article className="reports-card">
+            <article className="reports-card rounded-2xl bg-slate-50 p-4 shadow-sm">
               <h3>Payment Methods</h3>
               {paymentMethods.map((method) => (
                 <div key={method.id} className="reports-presets-row">
@@ -1869,7 +1899,7 @@ function App() {
               ))}
             </article>
 
-            <article className="reports-card">
+            <article className="reports-card rounded-2xl bg-slate-50 p-4 shadow-sm">
               <h3>Floor & Tables</h3>
               <div className="reports-filter-grid">
                 <label>
@@ -1962,7 +1992,7 @@ function App() {
             </article>
           </div>
 
-          <article className="reports-card">
+          <article className="reports-card rounded-2xl bg-slate-50 p-4 shadow-sm">
             <h3>Create Product</h3>
             <div className="reports-filter-grid">
               <label>
@@ -2048,7 +2078,7 @@ function App() {
       {view === 'pos' && (
         <>
 
-      <section className="verification-panel">
+      <section className="verification-panel rounded-3xl bg-white p-5 shadow-sm">
         <div className="verification-panel-header">
           <h2>Customer Orders Pending Verification</h2>
           <button
@@ -2067,7 +2097,7 @@ function App() {
 
         <div className="verification-grid">
           {pendingVerificationOrders.map((order) => (
-            <article key={order.order_id} className="verification-card">
+            <article key={order.order_id} className="verification-card rounded-2xl bg-slate-50 p-4 shadow-sm">
               <p className="verification-title">
                 {order.order_number} · Table {order.table_number}
               </p>
@@ -2103,7 +2133,7 @@ function App() {
         </div>
       </section>
 
-      <section className="floor-panel">
+      <section className="floor-panel rounded-3xl bg-white p-5 shadow-sm">
         <h2>Floor View</h2>
         <div className="chip-row">
           {floors.map((floor) => (
@@ -2134,14 +2164,14 @@ function App() {
       </section>
 
       <section className="main-grid">
-        <div className="product-panel">
+        <div className="product-panel rounded-3xl bg-white p-5 shadow-sm">
           <h2>Artisan Menu</h2>
           <div className="product-grid">
             {products.map((product) => (
               <button
                 key={product.id}
                 type="button"
-                className="product-card"
+                className="product-card rounded-2xl bg-slate-50 p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95"
                 onClick={() => addProductToOrder(product)}
               >
                 <p className="product-name">{product.name}</p>
@@ -2152,7 +2182,7 @@ function App() {
           </div>
         </div>
 
-        <aside className="order-tray">
+        <aside className="order-tray rounded-3xl bg-white p-5 shadow-sm">
           <h2>Order Tray</h2>
           <p className="table-pill">
             {selectedTable ? `Table ${selectedTable.table_number}` : 'No table selected'}
@@ -2161,7 +2191,7 @@ function App() {
           <div className="order-lines">
             {orderLines.length === 0 && <p className="empty-note">No items yet.</p>}
             {orderLines.map((line) => (
-              <article key={line.productId} className="order-line-card">
+              <article key={line.productId} className="order-line-card rounded-2xl bg-slate-50 px-3 py-2">
                 <p>{line.name}</p>
                 <div className="quantity-controls">
                   <button
@@ -2184,7 +2214,7 @@ function App() {
             ))}
           </div>
 
-          <div className="totals-block">
+          <div className="totals-block rounded-2xl bg-slate-50 p-3">
             <p>Subtotal: {formatMoney(orderSummary.subtotal)}</p>
             <p>Tax: {formatMoney(orderSummary.tax)}</p>
             <p className="total-row">Total: {formatMoney(orderSummary.total)}</p>
@@ -2207,7 +2237,7 @@ function App() {
           )}
 
           {pendingPaymentOrder && (
-            <section className="payment-block">
+            <section className="payment-block rounded-2xl bg-slate-50 p-3">
               <h3>Payment</h3>
               <p className="payment-order-label">
                 {pendingPaymentOrder.orderNumber} · {formatMoney(pendingPaymentOrder.amount)}
@@ -2280,6 +2310,48 @@ function App() {
       </section>
         </>
       )}
+
+        </div>
+      </section>
+      </div>
+
+      <div className="fixed bottom-4 left-4 right-4 z-20 flex flex-wrap justify-center gap-2 rounded-full bg-white/90 p-3 shadow-md backdrop-blur" role="region" aria-label="Quick Actions">
+        {!session && (
+          <button
+            type="button"
+            className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-1 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={handleOpenSession}
+            disabled={isBusy}
+          >
+            Open Session
+          </button>
+        )}
+        {session && (
+          <button
+            type="button"
+            className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:bg-slate-200 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={handleCloseRegister}
+            disabled={isBusy}
+          >
+            Close Register
+          </button>
+        )}
+        <button
+          type="button"
+          className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:bg-slate-200 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={handleReloadData}
+          disabled={isBusy}
+        >
+          Reload
+        </button>
+        <button
+          type="button"
+          className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-1 hover:bg-slate-200 hover:shadow-sm active:scale-95"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+      </div>
     </main>
   )
 }

@@ -1,89 +1,82 @@
-# Design System Specification: The Organic Editorial POS
+# Design System Document: Liquid Precision
 
-## 1. Overview & Creative North Star
-**Creative North Star: "The Botanical Ledger"**
-This design system rejects the clinical, "plastic" feel of traditional SaaS. Instead, it draws inspiration from high-end editorial magazines and organic hospitality. We are building a "Botanical Ledger"—a system that feels as tactile as a heavy-stock paper menu and as fluid as a morning pour-over.
+## 1. Overview & Creative North Star: "The Kinetic Sanctuary"
+The POS environment is traditionally cluttered, rigid, and stressful. This design system rejects that friction. Our Creative North Star is **The Kinetic Sanctuary**—a digital environment that feels like a fluid, living organism. We move away from "software" and toward "sculpture."
 
-To move beyond the "template" look, we utilize **Intentional Asymmetry** and **Tonal Depth**. By favoring whitespace over lines and background shifts over borders, the interface breathes. It creates an environment where the barista isn't just "inputting data" but navigating a curated digital experience that mirrors the premium nature of the coffee itself.
+To break the "template" look, this system utilizes **Absolute Liquidity**. By pairing the aggressive, avant-garde geometry of *Syne* with hyper-rounded "pill" containers and glassmorphism, we create a high-end editorial feel that remains incredibly functional for fast-paced retail or hospitality. We prioritize intentional asymmetry and "breathing room" over dense grids, ensuring every touch interaction feels like a deliberate, premium gesture.
 
 ---
 
-## 2. Colors & Atmospheric Tones
-The palette is rooted in a "Forest-to-Cream" spectrum. We use deep greens for authority and soft sages for utility.
+## 2. Colors: Tonal Depth & The No-Line Rule
+Our palette is a dialogue between organic forest depths and high-energy mint. 
 
 ### The "No-Line" Rule
-**Explicit Instruction:** Traditional 1px solid borders are strictly prohibited for sectioning.
-Structure must be defined through:
-1. **Background Color Shifts:** Placing a `surface-container-low` component against a `surface` background.
-2. **Tonal Transitions:** Using padding and color blocks to define the edge of an interactive area.
+**Standard 1px borders are strictly prohibited.** Boundaries must be defined through background color shifts or subtle tonal transitions. Use `surface_container_low` (#f3f4f0) to section off areas from the main `background` (#f9faf6). If a container needs to pop, we use color elevation, not strokes.
 
 ### Surface Hierarchy & Nesting
-Treat the UI as a series of physical layers.
-- **Base Layer:** `surface` (#f1fdea) for the main application background.
-- **Mid Layer:** `surface-container` (#e6f2de) for secondary sidebars or navigation regions.
-- **Top Layer:** `surface-container-highest` (#dae6d3) for active order modules or high-priority modals.
+Instead of a flat grid, treat the UI as stacked sheets of frosted glass.
+*   **Base:** `background` (#f9faf6)
+*   **Sectioning:** `surface_container` (#edeeea)
+*   **Actionable Cards:** `surface_container_lowest` (#ffffff)
+*   **Floating Modals:** `surface_bright` (#f9faf6) with 24px backdrop blur.
 
-### The "Glass & Signature Texture" Rule
-- **Floating Elements:** Use `surface-container-lowest` (#ffffff) with a 60% opacity and a `20px` backdrop-blur for floating action panels (e.g., "Add to Cart" confirmation).
-- **CTA Soul:** Apply a subtle linear gradient to main action buttons transitioning from `primary` (#324122) to `primary_container` (#495937) at 135 degrees. This prevents "flatness" and adds a premium sheen.
-
----
-
-## 3. Typography
-We use a high-contrast pairing of **Manrope** for editorial impact and **Inter** for transactional clarity.
-
-* **Display & Headlines (Manrope):** These are the "Voice" of the brand. Use `display-md` for the shop name and `headline-sm` for category headers (e.g., *Artisan Brews*). The tight tracking and heavy weight convey artisanal authority.
-* **Titles & Body (Inter):** Used for functional data. `title-md` is the standard for product names, while `body-md` handles descriptions.
-* **Currency (INR ₹):** Always rendered in `title-lg` (Inter) with a semi-bold weight to ensure the price is the most legible element on the product card.
+### The Glass & Gradient Rule
+To achieve "visual soul," primary actions should not be flat. Apply a subtle linear gradient to main CTAs: 
+*   **From:** `primary` (#006d35) 
+*   **To:** `primary_container` (#00e676) at a 135-degree angle.
+For floating overlays, use `surface_variant` at 70% opacity with a `saturate(150%)` backdrop filter to let the underlying colors bleed through beautifully.
 
 ---
 
-## 4. Elevation & Depth
-We define hierarchy through **Tonal Layering** rather than structural scaffolding.
+## 3. Typography: Editorial Authority
+We pair a loud, wide Heading font with a clean, tech-forward Body font to balance personality with legibility.
 
-* **The Layering Principle:** Avoid shadows for static elements. A `surface-container-low` section sitting on a `surface` background creates a soft, natural lift.
-* **Ambient Shadows:** For "floating" states (modals/popovers), use an extra-diffused shadow: `0px 12px 32px rgba(20, 30, 18, 0.06)`. Note the tint: the shadow uses a version of the `on-surface` color, not pure black.
-* **The "Ghost Border":** If accessibility requires a stroke (e.g., in high-glare environments), use `outline-variant` (#c5c8bc) at **15% opacity**.
-* **Glassmorphism:** Use for "Order Summary" sidebars to allow the vibrant product photography to bleed through the background, making the UI feel integrated and modern.
-
----
-
-## 5. Components
-
-### Buttons (The "Tactile" Standard)
-- **Primary:** Gradient-filled (`primary` to `primary_container`), `xl` roundedness (1.5rem). High-contrast `on_primary` text.
-- **Secondary:** `surface-container-highest` background. No border. Soft sage text.
-- **Interaction:** On hover, increase the gradient intensity. On active (click), scale the button to 98%.
-
-### Product Cards
-- **Construction:** Use `surface-container-low` (#ebf7e4) with `lg` (1rem) corners.
-- **No Lines:** Do not use dividers between the image and text. Use `1.5rem` of vertical whitespace to separate the product title from the price (₹).
-- **Interactive State:** On selection, the card should transition to `primary_container` with `on_primary_container` text.
-
-### Inputs & Search
-- **Visuals:** Use `surface-container-lowest` (pure white) to draw the eye to the input field.
-- **States:** Focus state is indicated by a 2px `surface_tint` (#536441) glow—never a harsh solid line.
-
-### Chips (Category Filters)
-- **Style:** Pill-shaped (`full` roundedness).
-- **Unselected:** `surface-container-high` background with `on_surface_variant` text.
-- **Selected:** `primary` background with `on_primary` text.
-
-### The "Order Tray" (Context-Specific)
-Instead of a standard list, the Order Tray uses nested containers. Each line item sits on a `surface-container-lowest` card with a `sm` shadow to indicate it is "removable" and "movable."
+*   **Display & Headlines (Syne, 700):** These are your "statements." Use `display-lg` for totals and key brand moments. The wide apertures of Syne convey a modern, "too-cool-to-care" confidence.
+*   **Titles & Body (Outfit, 400):** Outfit provides the "tech" counter-balance. Its geometric nature ensures high legibility on POS hardware from arm's length.
+*   **Labels (Outfit, 500):** All caps with a 0.05em letter spacing for secondary metadata to maintain the editorial hierarchy.
 
 ---
 
-## 6. Do’s and Don'ts
+## 4. Elevation & Depth: Tonal Layering
+We do not use shadows to show "standard" height; we use them to show "presence."
 
-### Do
-- **Do** use large, generous padding. Premium feels like space.
-- **Do** use `INR (₹)` before the numerical value without a space (e.g., ₹450).
-- **Do** lean into the "Sage" tones for success states instead of bright neon greens.
-- **Do** use `xl` (1.5rem) roundedness for the primary "Checkout" container to make it the softest, most inviting touchpoint.
+*   **The Layering Principle:** Place a `surface_container_lowest` card on a `surface_container_low` background. The contrast is enough to define the shape without visual noise.
+*   **Ambient Shadows:** For floating elements (Modals, Popovers), use a triple-layered shadow:
+    *   `box-shadow: 0 10px 40px -10px rgba(26, 51, 34, 0.08), 0 20px 60px -20px rgba(0, 230, 118, 0.04);`
+    *   This uses a tinted version of our `on_surface` and `primary` colors to mimic natural light.
+*   **The "Ghost Border" Fallback:** If accessibility requires a stroke, use `outline_variant` (#bacbb9) at **15% opacity**. It should be felt, not seen.
 
-### Don’t
-- **Don't** use 100% black (#000000). Use the "Deep Forest" (#071006) for all dark text.
-- **Don't** use standard dividers. If you must separate items, use a `1px` line with `outline-variant` at 10% opacity, or simply a `16px` gap.
-- **Don't** use "default" system shadows. They are too heavy for this organic palette.
-- **Don't** cram the screen. If the POS feels busy, increase the background `surface` area.
+---
+
+## 5. Components: The Liquid Toolkit
+
+### Buttons: The Pill Standard
+All buttons use `rounded-full` (9999px). 
+*   **Primary:** Gradient fill (`primary` to `primary_container`) with white text. 
+*   **Secondary:** `secondary_container` fill with `on_secondary_container` text.
+*   **States:** On hover/tap, scale the button to 0.98 and increase the shadow diffusion. Use a 200ms `cubic-bezier(0.4, 0, 0.2, 1)` transition.
+
+### Input Fields: Soft Wells
+Inputs are not boxes; they are "wells" carved into the surface. Use `surface_container_highest` with no border. On focus, transition the background to `surface_container_lowest` and add a soft `primary` outer glow (8px blur, 10% opacity).
+
+### Cards & Lists: Flowing Groups
+*   **Cards:** Borderless. Use `lg` (2rem) or `xl` (3rem) corner radius.
+*   **Lists:** Forbid divider lines. Use `16px` of vertical whitespace. To separate items, use a very subtle `surface_container_low` background on every second item (zebra striping) or simply rely on typography weight shifts.
+
+### POS-Specific Components:
+*   **The "Quick-Action" Tray:** A persistent glassmorphic bar at the bottom of the screen using `backdrop-filter: blur(40px)`.
+*   **Liquid Modals:** Dialogs should slide up from the bottom with a "spring" animation, utilizing the `full` border radius on the top corners to feel like a rising bubble.
+
+---
+
+## 6. Do's and Don'ts
+
+### Do:
+*   **Embrace Negative Space:** If you think a section needs a border, try adding 24px of padding instead.
+*   **Use Asymmetric Layouts:** In the checkout summary, align totals to the right and labels to the extreme left to create "tension."
+*   **Animate Tactilely:** Every touch must have a "snappy" response. Objects should feel like they have weight but no friction.
+
+### Don't:
+*   **No Sharp Corners:** Never use a corner radius below 8px. Even "square" elements should feel soft.
+*   **No Pure Greys:** Never use #000000 or neutral #888888. Always tint your neutrals with the Forest Green (`on_surface_variant`) to maintain the organic warmth.
+*   **No Crowding:** If the POS screen feels "busy," remove elements. The Liquid Minimalist aesthetic relies on the user focusing on one flow at a time.
