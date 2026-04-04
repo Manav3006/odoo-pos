@@ -61,6 +61,8 @@ cp .env.example .env
 python app.py
 
 Backend runs on http://localhost:5000.
+Default SQLite path is ~/.local/share/odoo-pos/odoo_pos.db so runtime data stays outside the repository.
+If your existing server/.env still has DB_PATH=odoo_pos.db, update it to ~/.local/share/odoo-pos/odoo_pos.db (or remove DB_PATH) to avoid local git churn.
 
 ### 2) Frontend setup
 1. Move into client directory.

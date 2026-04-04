@@ -19,10 +19,22 @@ load_dotenv(BASE_DIR / ".env")
 socketio = SocketIO(async_mode="threading", cors_allowed_origins="*")
 
 
+def _resolve_db_path() -> str:
+    raw_db_path = (os.getenv("DB_PATH") or "").strip()
+    legacy_values = {"", "odoo_pos.db", "./odoo_pos.db", "server/odoo_pos.db"}
+    if raw_db_path in legacy_values:
+        return str(DEFAULT_DB_PATH)
+
+    configured_path = Path(raw_db_path).expanduser()
+    if not configured_path.is_absolute():
+        configured_path = (BASE_DIR / configured_path).resolve()
+    return str(configured_path)
+
+
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config.update(
-        DB_PATH=os.getenv("DB_PATH", str(DEFAULT_DB_PATH)),
+        DB_PATH=_resolve_db_path(),
         JWT_SECRET=os.getenv("JWT_SECRET", "replace-me-in-production"),
         KITCHEN_DISPLAY_KEY=os.getenv("KITCHEN_DISPLAY_KEY", "kitchen-display-dev-key"),
         APP_HOST=os.getenv("APP_HOST", "0.0.0.0"),

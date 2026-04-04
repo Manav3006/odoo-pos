@@ -166,9 +166,9 @@
 }
 
 .button-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  background: #0f172a;
   color: var(--on-primary);
-  box-shadow: 0 10px 30px -16px rgba(0, 109, 53, 0.5);
+  box-shadow: 0 10px 22px -14px rgba(15, 23, 42, 0.45);
 }
 
 .button-primary:hover {
@@ -178,8 +178,8 @@
 .button-secondary,
 .button-ghost,
 .chip {
-  background: var(--secondary-container);
-  color: var(--on-secondary-container);
+  background: #f1f5f9;
+  color: #334155;
 }
 
 .button-primary:active,
@@ -227,7 +227,7 @@
 }
 
 .chip-active {
-  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  background: #0f172a;
   color: var(--on-primary);
 }
 
@@ -285,9 +285,9 @@
 }
 
 .sidebar-nav-item-active {
-  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  background: #0f172a;
   color: var(--on-primary);
-  box-shadow: 0 8px 20px -12px rgba(0, 109, 53, 0.6);
+  box-shadow: 0 8px 20px -12px rgba(15, 23, 42, 0.45);
 }
 
 .sidebar-nav-item-active small {
@@ -500,7 +500,7 @@
 }
 
 .table-selected {
-  background: linear-gradient(145deg, rgba(0, 109, 53, 0.95), rgba(0, 230, 118, 0.85));
+  background: linear-gradient(145deg, #0f172a, #334155);
   color: var(--on-primary);
 }
 
@@ -621,7 +621,7 @@
 }
 
 .customer-status-pill-payment {
-  background: rgba(0, 109, 53, 0.15);
+  background: rgba(15, 23, 42, 0.1);
 }
 
 .reports-filter-grid {

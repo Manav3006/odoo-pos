@@ -6,12 +6,15 @@ from typing import Any
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_DB_PATH = BASE_DIR / "odoo_pos.db"
+DEFAULT_DB_PATH = (
+    Path.home() / ".local" / "share" / "odoo-pos" / "odoo_pos.db"
+)
 SCHEMA_PATH = BASE_DIR / "schema.sql"
 
 
 def get_connection(db_path: str | None = None) -> sqlite3.Connection:
     path = db_path or str(DEFAULT_DB_PATH)
+    Path(path).expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(path)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON;")
