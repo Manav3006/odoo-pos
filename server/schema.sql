@@ -89,13 +89,15 @@ CREATE TABLE IF NOT EXISTS orders (
 	order_number TEXT NOT NULL UNIQUE,
 	session_id INTEGER NOT NULL,
 	table_id INTEGER NOT NULL,
+	customer_id INTEGER,
 	created_at TEXT NOT NULL,
 	order_status TEXT NOT NULL DEFAULT 'DRAFT',
 	subtotal REAL NOT NULL DEFAULT 0,
 	tax_total REAL NOT NULL DEFAULT 0,
 	total_amount REAL NOT NULL DEFAULT 0,
 	FOREIGN KEY (session_id) REFERENCES pos_sessions(id),
-	FOREIGN KEY (table_id) REFERENCES tables(id)
+	FOREIGN KEY (table_id) REFERENCES tables(id),
+	FOREIGN KEY (customer_id) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS order_items (

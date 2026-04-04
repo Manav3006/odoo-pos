@@ -19,9 +19,12 @@ def signup():
     email = (payload.get("email") or "").strip().lower()
     password = payload.get("password") or ""
     role = (payload.get("role") or "staff").strip().lower()
+    allowed_roles = {"staff", "manager", "customer"}
 
     if not username or not email or len(password) < 6:
         return jsonify({"error": "username, email and password(>=6) are required."}), 400
+    if role not in allowed_roles:
+        return jsonify({"error": "Invalid role."}), 400
 
     db_path = current_app.config["DB_PATH"]
     password_hash = hash_password(password)

@@ -21,7 +21,28 @@ def get_connection(db_path: str | None = None) -> sqlite3.Connection:
 def ensure_schema(db_path: str | None = None) -> None:
     schema_sql = SCHEMA_PATH.read_text(encoding="utf-8")
     with get_connection(db_path) as connection:
+        orders_table = connection.execute(
+            """
+            SELECT name
+            FROM sqlite_master
+            WHERE type = 'table' AND name = 'orders'
+            LIMIT 1;
+            """
+        ).fetchone()
+        if orders_table is not None:
+            order_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(orders);").fetchall()
+            }
+            if "customer_id" not in order_columns:
+                connection.execute(
+                    "ALTER TABLE orders ADD COLUMN customer_id INTEGER REFERENCES users(id);"
+                )
+
         connection.executescript(schema_sql)
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);"
+        )
 
 
 def seed_demo_data(db_path: str | None = None) -> None:

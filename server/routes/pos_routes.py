@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import csv
 import json
+import sqlite3
 from io import BytesIO
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -132,6 +133,274 @@ def list_payment_methods():
             }
             for row in rows
         ]
+    )
+
+
+@pos_bp.patch("/payment-methods/<int:method_id>")
+@auth_required
+def update_payment_method(method_id: int):
+    role = (g.current_user.get("role") or "").strip().lower()
+    if role == "customer":
+        return jsonify({"error": "Only manager/staff can update payment methods."}), 403
+
+    payload = request.get_json(silent=True) or {}
+    is_enabled_raw = payload.get("is_enabled")
+    upi_id_raw = payload.get("upi_id")
+
+    if is_enabled_raw is None and upi_id_raw is None:
+        return jsonify({"error": "Nothing to update."}), 400
+
+    db_path = current_app.config["DB_PATH"]
+    with get_connection(db_path) as connection:
+        existing = connection.execute(
+            """
+            SELECT id, name, method_type, is_enabled, upi_id
+            FROM payment_methods
+            WHERE id = ?
+            LIMIT 1;
+            """,
+            (method_id,),
+        ).fetchone()
+
+        if existing is None:
+            return jsonify({"error": "Payment method not found."}), 404
+
+        next_is_enabled = (
+            int(bool(is_enabled_raw))
+            if is_enabled_raw is not None
+            else int(existing["is_enabled"])
+        )
+        next_upi_id = (
+            (upi_id_raw or "").strip() if upi_id_raw is not None else existing["upi_id"]
+        )
+        if existing["method_type"] != "UPI":
+            next_upi_id = None
+
+        connection.execute(
+            """
+            UPDATE payment_methods
+            SET is_enabled = ?, upi_id = ?
+            WHERE id = ?;
+            """,
+            (next_is_enabled, next_upi_id, method_id),
+        )
+
+    return jsonify(
+        {
+            "id": method_id,
+            "name": existing["name"],
+            "method_type": existing["method_type"],
+            "is_enabled": bool(next_is_enabled),
+            "upi_id": next_upi_id,
+        }
+    )
+
+
+@pos_bp.post("/floors")
+@auth_required
+def create_floor():
+    role = (g.current_user.get("role") or "").strip().lower()
+    if role == "customer":
+        return jsonify({"error": "Only manager/staff can create floors."}), 403
+
+    payload = request.get_json(silent=True) or {}
+    name = (payload.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "Floor name is required."}), 400
+
+    db_path = current_app.config["DB_PATH"]
+    try:
+        with get_connection(db_path) as connection:
+            floor_id = connection.execute(
+                "INSERT INTO floors (name) VALUES (?);",
+                (name,),
+            ).lastrowid
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "Floor name already exists."}), 409
+
+    return jsonify({"id": floor_id, "name": name}), 201
+
+
+@pos_bp.post("/tables")
+@auth_required
+def create_table():
+    role = (g.current_user.get("role") or "").strip().lower()
+    if role == "customer":
+        return jsonify({"error": "Only manager/staff can create tables."}), 403
+
+    payload = request.get_json(silent=True) or {}
+    floor_id = int(payload.get("floor_id") or 0)
+    table_number = (payload.get("table_number") or "").strip()
+    seats = int(payload.get("seats") or 2)
+
+    if floor_id <= 0 or not table_number:
+        return jsonify({"error": "floor_id and table_number are required."}), 400
+    if seats <= 0:
+        return jsonify({"error": "seats must be greater than 0."}), 400
+
+    db_path = current_app.config["DB_PATH"]
+    with get_connection(db_path) as connection:
+        floor = connection.execute(
+            "SELECT id FROM floors WHERE id = ? LIMIT 1;",
+            (floor_id,),
+        ).fetchone()
+        if floor is None:
+            return jsonify({"error": "Floor not found."}), 404
+
+        try:
+            table_id = connection.execute(
+                """
+                INSERT INTO tables (floor_id, table_number, seats, is_active)
+                VALUES (?, ?, ?, 1);
+                """,
+                (floor_id, table_number, seats),
+            ).lastrowid
+        except sqlite3.IntegrityError:
+            return jsonify({"error": "Table number already exists on this floor."}), 409
+
+    return (
+        jsonify(
+            {
+                "id": table_id,
+                "floor_id": floor_id,
+                "table_number": table_number,
+                "seats": seats,
+                "is_active": True,
+            }
+        ),
+        201,
+    )
+
+
+@pos_bp.patch("/tables/<int:table_id>")
+@auth_required
+def update_table(table_id: int):
+    role = (g.current_user.get("role") or "").strip().lower()
+    if role == "customer":
+        return jsonify({"error": "Only manager/staff can update tables."}), 403
+
+    payload = request.get_json(silent=True) or {}
+    is_active_raw = payload.get("is_active")
+    seats_raw = payload.get("seats")
+
+    if is_active_raw is None and seats_raw is None:
+        return jsonify({"error": "Nothing to update."}), 400
+
+    db_path = current_app.config["DB_PATH"]
+    with get_connection(db_path) as connection:
+        existing = connection.execute(
+            """
+            SELECT id, floor_id, table_number, seats, is_active
+            FROM tables
+            WHERE id = ?
+            LIMIT 1;
+            """,
+            (table_id,),
+        ).fetchone()
+        if existing is None:
+            return jsonify({"error": "Table not found."}), 404
+
+        next_is_active = (
+            int(bool(is_active_raw))
+            if is_active_raw is not None
+            else int(existing["is_active"])
+        )
+        next_seats = int(seats_raw) if seats_raw is not None else int(existing["seats"])
+        if next_seats <= 0:
+            return jsonify({"error": "seats must be greater than 0."}), 400
+
+        connection.execute(
+            """
+            UPDATE tables
+            SET is_active = ?, seats = ?
+            WHERE id = ?;
+            """,
+            (next_is_active, next_seats, table_id),
+        )
+
+    return jsonify(
+        {
+            "id": table_id,
+            "floor_id": existing["floor_id"],
+            "table_number": existing["table_number"],
+            "seats": next_seats,
+            "is_active": bool(next_is_active),
+        }
+    )
+
+
+@pos_bp.post("/products")
+@auth_required
+def create_product():
+    role = (g.current_user.get("role") or "").strip().lower()
+    if role == "customer":
+        return jsonify({"error": "Only manager/staff can create products."}), 403
+
+    payload = request.get_json(silent=True) or {}
+    name = (payload.get("name") or "").strip()
+    category_name = (payload.get("category") or "").strip()
+    unit = (payload.get("unit") or "unit").strip() or "unit"
+    description = (payload.get("description") or "").strip() or None
+
+    try:
+        price = float(payload.get("price"))
+        tax_rate = float(payload.get("tax_rate") or 0)
+    except (TypeError, ValueError):
+        return jsonify({"error": "price and tax_rate must be numeric."}), 400
+
+    if not name:
+        return jsonify({"error": "Product name is required."}), 400
+    if price < 0:
+        return jsonify({"error": "price cannot be negative."}), 400
+    if tax_rate < 0:
+        return jsonify({"error": "tax_rate cannot be negative."}), 400
+
+    db_path = current_app.config["DB_PATH"]
+    with get_connection(db_path) as connection:
+        category_id = None
+        if category_name:
+            category = connection.execute(
+                "SELECT id FROM categories WHERE name = ? LIMIT 1;",
+                (category_name,),
+            ).fetchone()
+            if category is None:
+                category_id = connection.execute(
+                    "INSERT INTO categories (name) VALUES (?);",
+                    (category_name,),
+                ).lastrowid
+            else:
+                category_id = category["id"]
+
+        product_id = connection.execute(
+            """
+            INSERT INTO products (
+                name,
+                category_id,
+                price,
+                unit,
+                tax_rate,
+                description,
+                is_active
+            )
+            VALUES (?, ?, ?, ?, ?, ?, 1);
+            """,
+            (name, category_id, price, unit, tax_rate, description),
+        ).lastrowid
+
+    return (
+        jsonify(
+            {
+                "id": product_id,
+                "name": name,
+                "category": category_name or None,
+                "price": round(price, 2),
+                "unit": unit,
+                "tax_rate": round(tax_rate, 2),
+                "description": description,
+                "is_active": True,
+            }
+        ),
+        201,
     )
 
 
@@ -325,9 +594,15 @@ def create_order():
     table_id = payload.get("table_id")
     items = payload.get("items") or []
     user_role = (g.current_user.get("role") or "staff").strip().lower()
+    current_user_id = int(g.current_user["user_id"])
     requested_source = (payload.get("source") or "").strip().upper()
-    is_self_order = user_role == "customer" or requested_source == "SELF_ORDER"
+
+    if requested_source == "SELF_ORDER" and user_role != "customer":
+        return jsonify({"error": "Only customers can place self orders."}), 403
+
+    is_self_order = user_role == "customer"
     initial_status = "PENDING_VERIFICATION" if is_self_order else "DRAFT"
+    customer_id = current_user_id if user_role == "customer" else None
 
     if not session_id or not table_id or not items:
         return jsonify({"error": "session_id, table_id and items are required."}), 400
@@ -400,18 +675,20 @@ def create_order():
                 order_number,
                 session_id,
                 table_id,
+                customer_id,
                 created_at,
                 order_status,
                 subtotal,
                 tax_total,
                 total_amount
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
             """,
             (
                 order_number,
                 session_id,
                 table_id,
+                customer_id,
                 now,
                 initial_status,
                 subtotal,
@@ -431,7 +708,7 @@ def create_order():
             )
             VALUES (?, NULL, ?, ?, ?);
             """,
-            (order_id, initial_status, int(g.current_user["user_id"]), now),
+            (order_id, initial_status, current_user_id, now),
         )
 
         for item in expanded_items:
@@ -475,6 +752,7 @@ def create_order():
                 "order_number": order_number,
                 "order_status": initial_status,
                 "requires_manager_verification": initial_status == "PENDING_VERIFICATION",
+                "customer_id": customer_id,
                 "subtotal": round(subtotal, 2),
                 "tax_total": round(total_tax, 2),
                 "total_amount": total_amount,
@@ -638,11 +916,15 @@ def list_pending_verification_orders():
                 o.order_number,
                 o.session_id,
                 o.table_id,
+                o.customer_id,
                 o.total_amount,
                 o.created_at,
-                t.table_number
+                t.table_number,
+                cu.username AS customer_username,
+                cu.email AS customer_email
             FROM orders o
             JOIN tables t ON t.id = o.table_id
+            LEFT JOIN users cu ON cu.id = o.customer_id
             WHERE {where_sql}
             ORDER BY o.id ASC;
             """,
@@ -669,6 +951,9 @@ def list_pending_verification_orders():
                     "session_id": order["session_id"],
                     "table_id": order["table_id"],
                     "table_number": order["table_number"],
+                    "customer_id": order["customer_id"],
+                    "customer_username": order["customer_username"],
+                    "customer_email": order["customer_email"],
                     "total_amount": order["total_amount"],
                     "created_at": order["created_at"],
                     "items": [
@@ -1365,6 +1650,8 @@ def update_public_kitchen_ticket_status(ticket_id: int):
 def get_customer_display_latest():
     table_id_param = (request.args.get("table_id") or "").strip()
     db_path = current_app.config["DB_PATH"]
+    role = (g.current_user.get("role") or "").strip().lower()
+    current_user_id = int(g.current_user["user_id"])
 
     query = """
         SELECT
@@ -1392,16 +1679,27 @@ def get_customer_display_latest():
         FROM orders o
         LEFT JOIN tables t ON t.id = o.table_id
     """
-    params: tuple[Any, ...] = ()
+
+    where_clauses: list[str] = []
+    params_list: list[Any] = []
+    if role == "customer":
+        where_clauses.append("o.customer_id = ?")
+        params_list.append(current_user_id)
+
     if table_id_param:
         try:
             table_id = int(table_id_param)
         except ValueError:
             return jsonify({"error": "table_id must be an integer."}), 400
-        query += " WHERE o.table_id = ?"
-        params = (table_id,)
+
+        where_clauses.append("o.table_id = ?")
+        params_list.append(table_id)
+
+    if where_clauses:
+        query += " WHERE " + " AND ".join(where_clauses)
 
     query += " ORDER BY o.id DESC LIMIT 1;"
+    params = tuple(params_list)
 
     with get_connection(db_path) as connection:
         order = connection.execute(query, params).fetchone()
@@ -1455,38 +1753,48 @@ def get_customer_display_latest():
 @auth_required
 def get_customer_order_status(order_id: int):
     db_path = current_app.config["DB_PATH"]
+    role = (g.current_user.get("role") or "").strip().lower()
+    current_user_id = int(g.current_user["user_id"])
+
+    where_clause = "o.id = ?"
+    params: tuple[Any, ...] = (order_id,)
+    if role == "customer":
+        where_clause += " AND o.customer_id = ?"
+        params = (order_id, current_user_id)
+
+    query = f"""
+        SELECT
+            o.id,
+            o.order_number,
+            o.order_status,
+            o.total_amount,
+            o.created_at,
+            o.table_id,
+            t.table_number,
+            (
+                SELECT p.payment_status
+                FROM payments p
+                WHERE p.order_id = o.id
+                ORDER BY p.id DESC
+                LIMIT 1
+            ) AS payment_status,
+            (
+                SELECT kt.ticket_status
+                FROM kitchen_tickets kt
+                WHERE kt.order_id = o.id
+                ORDER BY kt.id DESC
+                LIMIT 1
+            ) AS kitchen_status
+        FROM orders o
+        LEFT JOIN tables t ON t.id = o.table_id
+        WHERE {where_clause}
+        LIMIT 1;
+    """
 
     with get_connection(db_path) as connection:
         order = connection.execute(
-            """
-            SELECT
-                o.id,
-                o.order_number,
-                o.order_status,
-                o.total_amount,
-                o.created_at,
-                o.table_id,
-                t.table_number,
-                (
-                    SELECT p.payment_status
-                    FROM payments p
-                    WHERE p.order_id = o.id
-                    ORDER BY p.id DESC
-                    LIMIT 1
-                ) AS payment_status,
-                (
-                    SELECT kt.ticket_status
-                    FROM kitchen_tickets kt
-                    WHERE kt.order_id = o.id
-                    ORDER BY kt.id DESC
-                    LIMIT 1
-                ) AS kitchen_status
-            FROM orders o
-            LEFT JOIN tables t ON t.id = o.table_id
-            WHERE o.id = ?
-            LIMIT 1;
-            """,
-            (order_id,),
+            query,
+            params,
         ).fetchone()
 
         if order is None:
