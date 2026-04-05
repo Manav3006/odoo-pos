@@ -134,6 +134,19 @@ function App() {
     [floors, selectedFloorId],
   )
 
+  const kitchenBoardColumns = useMemo(() => {
+    const columns = [
+      { key: 'TO_COOK', label: 'To Cook' },
+      { key: 'PREPARING', label: 'Preparing' },
+      { key: 'COMPLETED', label: 'Completed' },
+    ]
+
+    return columns.map((column) => ({
+      ...column,
+      tickets: kitchenTickets.filter((ticket) => ticket.ticket_status === column.key),
+    }))
+  }, [kitchenTickets])
+
   const orderSummary = useMemo(() => {
     const subtotal = orderLines.reduce(
       (total, item) => total + item.quantity * item.price,
@@ -1238,7 +1251,7 @@ function App() {
 
   if (isCustomerUser) {
     return (
-      <main className="pos-page">
+      <main className="pos-page customer-page" aria-busy={isBusy}>
         <header className="top-bar">
           <div>
             <p className="eyebrow">Customer Portal</p>
@@ -1251,14 +1264,14 @@ function App() {
             <button type="button" className="button-secondary" onClick={handleReloadData}>
               Reload Data
             </button>
-            <button type="button" className="button-secondary" onClick={handleLogout}>
+            <button type="button" className="button-secondary button-danger" onClick={handleLogout}>
               Logout
             </button>
           </div>
         </header>
 
-        {error && <p className="error-banner">{error}</p>}
-        {notice && <p className="notice-banner">{notice}</p>}
+        {error && <p className="error-banner" role="alert">{error}</p>}
+        {notice && <p className="notice-banner" role="status">{notice}</p>}
 
         <section className="floor-panel">
           <h2>Choose Table</h2>
@@ -1399,7 +1412,7 @@ function App() {
 
   if (isKitchenDisplayMode) {
     return (
-      <main className="pos-page">
+      <main className="pos-page kitchen-page" aria-busy={isBusy}>
         <header className="top-bar">
           <div>
             <p className="eyebrow">Kitchen Display</p>
@@ -1415,15 +1428,15 @@ function App() {
               Refresh
             </button>
             {!isKitchenPublicMode && (
-              <button type="button" className="button-secondary" onClick={handleLogout}>
+              <button type="button" className="button-secondary button-danger" onClick={handleLogout}>
                 Logout
               </button>
             )}
           </div>
         </header>
 
-        {error && <p className="error-banner">{error}</p>}
-        {notice && <p className="notice-banner">{notice}</p>}
+        {error && <p className="error-banner" role="alert">{error}</p>}
+        {notice && <p className="notice-banner" role="status">{notice}</p>}
 
         <section className="kitchen-board">
           <div className="kitchen-board-header">
@@ -1460,38 +1473,53 @@ function App() {
             </div>
           </div>
 
-          <div className="kitchen-grid">
-            {kitchenTickets.length === 0 && (
-              <p className="empty-note">No tickets for this filter.</p>
-            )}
-            {kitchenTickets.map((ticket) => (
-              <article key={ticket.ticket_id} className="kitchen-ticket-card">
-                <p className="kitchen-ticket-title">
-                  {ticket.order_number} · Table {ticket.table_number || '-'}
-                </p>
-                <p className="kitchen-ticket-status">{ticket.ticket_status}</p>
-                <div className="kitchen-item-list">
-                  {ticket.items.map((item, index) => (
-                    <p key={`${ticket.ticket_id}-${item.product_name}-${index}`}>
-                      {item.quantity} x {item.product_name}
-                    </p>
+          <div className="kitchen-kanban">
+            {(kitchenFilter
+              ? kitchenBoardColumns.filter((column) => column.key === kitchenFilter)
+              : kitchenBoardColumns
+            ).map((column) => (
+              <section key={column.key} className="kitchen-column">
+                <header className="kitchen-column-header">
+                  <h3>{column.label}</h3>
+                  <span className="kitchen-column-count">{column.tickets.length}</span>
+                </header>
+
+                {column.tickets.length === 0 && (
+                  <p className="empty-note">No tickets in this stage.</p>
+                )}
+
+                <div className="kitchen-grid">
+                  {column.tickets.map((ticket) => (
+                    <article key={ticket.ticket_id} className="kitchen-ticket-card">
+                      <p className="kitchen-ticket-title">
+                        {ticket.order_number} · Table {ticket.table_number || '-'}
+                      </p>
+                      <p className="kitchen-ticket-status">{ticket.ticket_status}</p>
+                      <div className="kitchen-item-list">
+                        {ticket.items.map((item, index) => (
+                          <p key={`${ticket.ticket_id}-${item.product_name}-${index}`}>
+                            {item.quantity} x {item.product_name}
+                          </p>
+                        ))}
+                      </div>
+                      {ticket.ticket_status !== 'COMPLETED' && (
+                        <button
+                          type="button"
+                          className="button-primary"
+                          onClick={() =>
+                            isKitchenPublicMode
+                              ? handleAdvanceTicketPublic(ticket)
+                              : handleAdvanceTicket(ticket)
+                          }
+                          disabled={isBusy}
+                        >
+                          Move to {ticket.ticket_status === 'TO_COOK' ? 'Preparing' : 'Completed'}
+                        </button>
+                      )}
+                    </article>
                   ))}
                 </div>
-                {ticket.ticket_status !== 'COMPLETED' && (
-                  <button
-                    type="button"
-                    className="button-primary"
-                    onClick={() =>
-                      isKitchenPublicMode
-                        ? handleAdvanceTicketPublic(ticket)
-                        : handleAdvanceTicket(ticket)
-                    }
-                    disabled={isBusy}
-                  >
-                    Move to {ticket.ticket_status === 'TO_COOK' ? 'Preparing' : 'Completed'}
-                  </button>
-                )}
-              </article>
+              </section>
             ))}
           </div>
         </section>
@@ -1500,7 +1528,7 @@ function App() {
   }
 
   return (
-    <main className="pos-page">
+    <main className="pos-page manager-page" aria-busy={isBusy}>
       <header className="top-bar">
         <div>
           <p className="eyebrow">Session Operator</p>
@@ -1566,14 +1594,14 @@ function App() {
               Close Register
             </button>
           )}
-          <button type="button" className="button-secondary" onClick={handleLogout}>
+          <button type="button" className="button-secondary button-danger" onClick={handleLogout}>
             Logout
           </button>
         </div>
       </header>
 
-      {error && <p className="error-banner">{error}</p>}
-      {notice && <p className="notice-banner">{notice}</p>}
+      {error && <p className="error-banner" role="alert">{error}</p>}
+      {notice && <p className="notice-banner" role="status">{notice}</p>}
 
       {view === 'customer' && (
         <section className="customer-display-board">
@@ -2091,7 +2119,7 @@ function App() {
                 </button>
                 <button
                   type="button"
-                  className="button-ghost"
+                  className="button-ghost button-danger-ghost"
                   disabled={isBusy}
                   onClick={() => handleRejectPendingOrder(order)}
                 >
