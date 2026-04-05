@@ -8,7 +8,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
-from db import DEFAULT_DB_PATH, ensure_schema, seed_demo_data
+from db import DEFAULT_DB_PATH, ensure_schema, resolve_db_path, seed_demo_data
 from routes import register_blueprints
 
 
@@ -21,13 +21,19 @@ socketio = SocketIO(async_mode="threading", cors_allowed_origins="*")
 
 def create_app() -> Flask:
     app = Flask(__name__)
+    db_path = resolve_db_path(os.getenv("DB_PATH", str(DEFAULT_DB_PATH)))
+    cors_origins = [
+        origin.strip()
+        for origin in os.getenv("CORS_ORIGINS", "*").split(",")
+        if origin.strip()
+    ]
     app.config.update(
-        DB_PATH=os.getenv("DB_PATH", str(DEFAULT_DB_PATH)),
+        DB_PATH=db_path,
         JWT_SECRET=os.getenv("JWT_SECRET", "replace-me-in-production"),
         KITCHEN_DISPLAY_KEY=os.getenv("KITCHEN_DISPLAY_KEY", "kitchen-display-dev-key"),
         APP_HOST=os.getenv("APP_HOST", "0.0.0.0"),
         APP_PORT=int(os.getenv("APP_PORT", "5000")),
-        CORS_ORIGINS=os.getenv("CORS_ORIGINS", "*").split(","),
+        CORS_ORIGINS=cors_origins or ["*"],
     )
 
     CORS(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
